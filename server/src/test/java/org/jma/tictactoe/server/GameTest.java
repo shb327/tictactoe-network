@@ -79,6 +79,21 @@ class GameTest {
     }
 
     @Test
+    void moveOffTheBoardIsRejected() {
+        assertFalse(game.move(P1, (byte) 3, (byte) 0));
+        assertFalse(game.move(P1, (byte) 0, (byte) -1));
+        assertEquals(P1, game.getTurnId());
+    }
+
+    @Test
+    void noMovesAfterTheGameIsOver() {
+        play(new int[]{0, 0}, new int[]{0, 1}, new int[]{1, 0}, new int[]{1, 1}, new int[]{2, 0});
+        assertFalse(game.move(P2, (byte) 2, (byte) 1));
+        assertEquals("END " + P1, game.getState());
+        assertEquals(0, game.getMap()[1][2]);
+    }
+
+    @Test
     void moveByUnknownPlayerIsRejected() {
         assertFalse(game.move(42, (byte) 0, (byte) 0));
         assertEquals(P1, game.getTurnId());

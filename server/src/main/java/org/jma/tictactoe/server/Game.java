@@ -53,6 +53,9 @@ class Game {
     }
 
     boolean move(int playerId, byte x, byte y) {
+        if (isOver() || x < 0 || x > 2 || y < 0 || y > 2) {
+            return false;
+        }
         if (turnId != playerId || map[y][x] != 0) {
             return false;
         }

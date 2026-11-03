@@ -74,8 +74,8 @@ class PlayerHandler {
 
     private void setMark(Player player, byte x, byte y, int gameId) throws IOException {
         Game game = server.getGames().get(gameId);
-        game.setState("PLAYING");
         if (game != null) {
+            game.setState("PLAYING");
             if (game.move(player.getId(), x, y)) {
                 if (game.isOver()) {
                     server.getGames().remove(gameId);
