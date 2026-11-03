@@ -47,4 +47,51 @@ class Game {
     void setState(String state) {
         this.state = state;
     }
+
+    boolean isOver() {
+        return state.startsWith("END");
+    }
+
+    boolean move(int playerId, byte x, byte y) {
+        if (turnId != playerId || map[y][x] != 0) {
+            return false;
+        }
+        if (turnId == player1.getId()) {
+            map[y][x] = 1;
+            turnId = player2.getId();
+        } else {
+            map[y][x] = 2;
+            turnId = player1.getId();
+        }
+        if (checkCondition((byte) 1)) {
+            state = "END " + player1.getId();
+        } else if (checkCondition((byte) 2)) {
+            state = "END " + player2.getId();
+        } else if (isFull()) {
+            state = "END 0";
+        }
+        return true;
+    }
+
+    private boolean checkCondition(byte player) {
+        for (int i = 0; i < 3; i++) {
+            if (map[i][0] == player && map[i][1] == player && map[i][2] == player) {
+                return true;
+            }
+            if (map[0][i] == player && map[1][i] == player && map[2][i] == player) {
+                return true;
+            }
+        }
+        return (map[0][0] == player && map[1][1] == player && map[2][2] == player) ||
+                (map[2][0] == player && map[1][1] == player && map[0][2] == player);
+    }
+
+    private boolean isFull() {
+        for (int x = 0; x < 3; x++) {
+            for (int y = 0; y < 3; y++) {
+                if (map[x][y] == 0) return false;
+            }
+        }
+        return true;
+    }
 }
