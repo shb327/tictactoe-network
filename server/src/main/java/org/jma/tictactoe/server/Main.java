@@ -11,7 +11,7 @@ public class Main {
             System.err.println("Warning: no ports specified, using default port server 25565 and broadcast 25566");
         } else {
             port = Integer.parseInt(args[0]);
-            broadcastPort = Integer.parseInt(args[0]);
+            broadcastPort = Integer.parseInt(args[1]);
         }
         Server server = new Server(port, broadcastPort);
         try {

@@ -1,7 +1,5 @@
 package org.jma.tictactoe.server;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 
 class PlayerHandler {
@@ -17,9 +15,9 @@ class PlayerHandler {
         server.getExecutor().execute(() -> {
             while (!player.getSocket().isClosed()) {
                 try {
-                    String command = player.getInputFromUser().readUTF();
-                    System.out.printf("%s: %s\n", player.toString(), command);
-                    switch (command) {
+                    Protocol.Command command = Protocol.readCommand(player.getInputFromUser());
+                    System.out.printf("%s: %s\n", player.toString(), command.name());
+                    switch (command.name()) {
                         case "PLAY":
                             Player poll = server.getGameQueue().poll();
                             if (poll != null) {
@@ -41,13 +39,10 @@ class PlayerHandler {
                             player.getOutputToUser().flush();
                             break;
                         case "SET":
-                            byte x = player.getInputFromUser().readByte();
-                            byte y = player.getInputFromUser().readByte();
-                            int gameId = player.getInputFromUser().readInt();
-                            setMark(player, x, y, gameId);
+                            setMark(player, command.x(), command.y(), command.gameId());
                             break;
                         default:
-                            System.err.printf("%s has entered invalid command '%s'\n", player.toString(), command);
+                            System.err.printf("%s has entered invalid command '%s'\n", player.toString(), command.name());
                     }
                 } catch (IOException e) {
                     logout();
@@ -79,24 +74,10 @@ class PlayerHandler {
 
     private void setMark(Player player, byte x, byte y, int gameId) throws IOException {
         Game game = server.getGames().get(gameId);
-        game.setState("PLAYING");
         if (game != null) {
-            if (game.getTurnId() == player.getId() && game.getMap()[y][x] == 0) {
-                if (game.getTurnId() == game.getPlayer1().getId()) {
-                    game.getMap()[y][x] = 1;
-                    game.setTurnId(game.getPlayer2().getId());
-                } else {
-                    game.getMap()[y][x] = 2;
-                    game.setTurnId(game.getPlayer1().getId());
-                }
-                if (checkCondition(game, (byte) 1)) {
-                    game.setState("END " + game.getPlayer1().getId());
-                    server.getGames().remove(gameId);
-                } else if (checkCondition(game, (byte) 2)) {
-                    game.setState("END " + game.getPlayer2().getId());
-                    server.getGames().remove(gameId);
-                } else if (isFull(game.getMap())) {
-                    game.setState("END 0");
+            game.setState("PLAYING");
+            if (game.move(player.getId(), x, y)) {
+                if (game.isOver()) {
                     server.getGames().remove(gameId);
                 }
                 sendPlayersUpdate(game);
@@ -106,46 +87,15 @@ class PlayerHandler {
         }
     }
 
-    private boolean checkCondition(Game game, byte player) {
-        for (int i = 0; i < 3; i++) {
-            if (game.getMap()[i][0] == player && game.getMap()[i][1] == player && game.getMap()[i][2] == player) {
-                return true;
-            }
-            if (game.getMap()[0][i] == player && game.getMap()[1][i] == player && game.getMap()[2][i] == player) {
-                return true;
-            }
-        }
-        return (game.getMap()[0][0] == player && game.getMap()[1][1] == player && game.getMap()[2][2] == player) ||
-                (game.getMap()[2][0] == player && game.getMap()[1][1] == player && game.getMap()[0][2] == player);
-    }
-
-    private boolean isFull(byte[][] map) {
-        for (int x = 0; x < 3; x++) {
-            for (int y = 0; y < 3; y++) {
-                if (map[x][y] == 0) return false;
-            }
-        }
-        return true;
-    }
-
     private void sendPlayersUpdate(Game game) throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        DataOutputStream out = new DataOutputStream(baos);
-        out.writeUTF("UPDATE");
-        out.writeInt(game.getId());
-        out.writeUTF(game.getState());
-        out.writeInt(game.getPlayer1().getId());
-        out.writeInt(game.getPlayer2().getId());
-        out.writeInt(game.getTurnId());
-        for (int x = 0; x < 3; x++) {
-            for (int y = 0; y < 3; y++) {
-                out.writeByte(game.getMap()[x][y]);
-            }
-        }
-        byte[] data = baos.toByteArray();
+        byte[] data = Protocol.update(game);
         sendUpdate(game.getPlayer1(), data);
         sendUpdate(game.getPlayer2(), data);
-        server.getBroadcaster().send(data);
+        try {
+            server.getBroadcaster().send(data);
+        } catch (IOException e) {
+            System.err.println("Unable to broadcast game update: " + e.getMessage());
+        }
     }
 
     private void sendUpdate(Player player, byte[] data) throws IOException {
