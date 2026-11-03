@@ -4,11 +4,7 @@
 
 Networked tic-tac-toe in Java: a TCP game server, a JavaFX client for players and a console viewer that follows every game over UDP broadcast.
 
-<!--
-  SCREENSHOT: two clients mid-game with the viewer's terminal beside them.
-  Save it as docs/demo.png (or docs/demo.gif) and uncomment the line below.
--->
-<!-- ![Two players and a spectator](docs/demo.png) -->
+![Two players and a spectator](docs/demo.png)
 
 ## How it works
 
