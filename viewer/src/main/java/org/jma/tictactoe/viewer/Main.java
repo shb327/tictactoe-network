@@ -25,14 +25,16 @@ public class Main {
             DataInputStream input = new DataInputStream(new ByteArrayInputStream(data));
             input.readUTF();
             System.out.println("Game id: " + input.readInt());
+            String state = input.readUTF();
             int p1 = input.readInt();
             int p2 = input.readInt();
-            String state = "State: " + input.readUTF();
             if (state.equals("END 0")) {
                 System.out.println("STATE: DRAW");
-            } else {
+            } else if (state.startsWith("END ")) {
                 int winId = Integer.parseInt(state.split(" ")[1]);
                 System.out.println("STATE: WIN Player " + (winId == p1 ? "1" : "2"));
+            } else {
+                System.out.println("STATE: " + state);
             }
             System.out.println("Player1 id: " + p1);
             System.out.println("Player2 id: " + p2);
