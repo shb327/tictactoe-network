@@ -106,11 +106,13 @@ class ServerIntegrationTest {
         serverThread.setDaemon(true);
         serverThread.start();
 
-        try (Client first = connect(port); Client second = connect(port)) {
+        try (Client first = connect(port)) {
             first.send("PLAY");
             // LIST is answered after PLAY is handled, so the first player is queued before the second joins.
             first.send("LIST");
-            assertEquals(2, readListSize(first));
+            assertEquals(1, readListSize(first));
+
+            Client second = connect(port);
             second.send("PLAY");
 
             NewGame game1 = readNewGame(first);
@@ -142,6 +144,7 @@ class ServerIntegrationTest {
 
             assertEquals("END " + p1, last.state());
             assertEquals("[1, 1, 1, 2, 2, 0, 0, 0, 0]", last.board());
+            second.close();
         }
     }
 }
