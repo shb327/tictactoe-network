@@ -91,7 +91,11 @@ class PlayerHandler {
         byte[] data = Protocol.update(game);
         sendUpdate(game.getPlayer1(), data);
         sendUpdate(game.getPlayer2(), data);
-        server.getBroadcaster().send(data);
+        try {
+            server.getBroadcaster().send(data);
+        } catch (IOException e) {
+            System.err.println("Unable to broadcast game update: " + e.getMessage());
+        }
     }
 
     private void sendUpdate(Player player, byte[] data) throws IOException {
